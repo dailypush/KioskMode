@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    AssignedAccess Multi-App Kiosk Configuration for Windows 10 Pro
+    
+    This XML configures a kiosk mode with an AllowedApps list restricting access to:
+    - Google Chrome browser
+    - Check scanner application (UPDATE PATH BELOW)
+    - Windows Explorer (limited to specific folders)
+    
+    CUSTOMIZATION REQUIRED:
+    1. Update scanner app path in AllowedApps section
+    2. Modify FileExplorerNamespaceRestrictions as needed
+    3. Update KioskUser account name if different
+    
+    Documentation: https://docs.microsoft.com/en-us/windows/configuration/lock-down-windows-10-to-specific-apps
+-->
+<AssignedAccessConfiguration 
+    xmlns="http://schemas.microsoft.com/AssignedAccess/2017/config"
+    xmlns:rs5="http://schemas.microsoft.com/AssignedAccess/201810/config"
+    xmlns:v3="http://schemas.microsoft.com/AssignedAccess/2020/config"
+    xmlns:v5="http://schemas.microsoft.com/AssignedAccess/2022/config">
+    
+    <Profiles>
+        <Profile Id="{9A2A490F-10F6-4764-974A-43B19E722C23}">
+            
+            <!-- Allowed Applications List -->
+            <AllAppsList>
+                <AllowedApps>
+                    
+                    <!-- Google Chrome Browser (64-bit installation) -->
+                    <App DesktopAppPath="%ProgramFiles%\Google\Chrome\Application\chrome.exe" />
+                    
+                    <!-- Google Chrome Browser (32-bit installation on 64-bit Windows) -->
+                    <App DesktopAppPath="%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" />
+                    
+                    <!-- 
+                        SCANNER APPLICATION - UPDATE THIS PATH
+                        Replace with your actual scanner application executable path
+                        Examples:
+                        <App DesktopAppPath="C:\Program Files\Scanner\ScannerApp.exe" />
+                        <App DesktopAppPath="C:\Program Files (x86)\CheckScanner\scanner.exe" />
+                    -->
+                    <App DesktopAppPath="C:\Program Files\ScannerApp\scanner.exe" />
+                    
+                    <!-- Windows File Explorer (for file access) -->
+                    <App DesktopAppPath="%windir%\explorer.exe" />
+                    
+                    <!-- 
+                        OPTIONAL: Add system apps if needed
+                        Notepad for viewing text files:
+                        <App DesktopAppPath="%windir%\system32\notepad.exe" />
+                        
+                        Calculator:
+                        <App AppUserModelId="Microsoft.WindowsCalculator_8wekyb3d8bbwe!App" />
+                    -->
+                    
+                </AllowedApps>
+            </AllAppsList>
+            
+            <!-- File Explorer Restrictions -->
+            <rs5:FileExplorerNamespaceRestrictions>
+                <!-- Allow access to Downloads folder -->
+                <v5:AllowedNamespace Name="Downloads"/>
+                
+                <!-- 
+                    OPTIONAL: Add more allowed folders
+                    Common options:
+                    <v5:AllowedNamespace Name="Documents"/>
+                    <v5:AllowedNamespace Name="Pictures"/>
+                    <v5:AllowedNamespace Name="Desktop"/>
+                    <v5:AllowedNamespace Name="Music"/>
+                    <v5:AllowedNamespace Name="Videos"/>
+                    
+                    Or specify custom path:
+                    <v5:AllowRemovableDrives/>
+                -->
+            </rs5:FileExplorerNamespaceRestrictions>
+            
+            <!-- Taskbar Configuration -->
+            <Taskbar ShowTaskbar="true"/>
+            
+            <!-- 
+                OPTIONAL: Custom Start Layout
+                You can create a custom Start menu layout to show only Chrome and Scanner icons.
+                Export your current Start layout using:
+                Export-StartLayout -Path C:\StartLayout.xml
+                
+                Then include the layout here:
+                <StartLayout>
+                    <![CDATA[
+                        <!-- Paste exported Start Layout XML here -->
+                    ]]>
+                </StartLayout>
+            -->
+            
+        </Profile>
+    </Profiles>
+    
+    <!-- Configuration Assignment -->
+    <Configs>
+        <Config>
+            <!-- 
+                Kiosk User Account
+                UPDATE this if you used a different username
+            -->
+            <Account>KioskUser</Account>
+            
+            <!-- Assign the profile defined above -->
+            <DefaultProfile Id="{9A2A490F-10F6-4764-974A-43B19E722C23}"/>
+        </Config>
+    </Configs>
+    
+</AssignedAccessConfiguration>
