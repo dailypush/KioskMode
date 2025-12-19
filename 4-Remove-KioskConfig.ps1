@@ -223,19 +223,19 @@ try {
     Write-Host "========================================`n" -ForegroundColor Green
     
     Write-Host "Summary:" -ForegroundColor Cyan
-    Write-Host "  • AssignedAccess configuration removed" -ForegroundColor White
+    Write-Host "  - AssignedAccess configuration removed" -ForegroundColor White
     if ($ClearAppLocker) {
-        Write-Host "  • AppLocker policies cleared" -ForegroundColor White
+        Write-Host "  - AppLocker policies cleared" -ForegroundColor White
     }
     if ($RemoveUser) {
-        Write-Host "  • Kiosk user account deleted" -ForegroundColor White
+        Write-Host "  - Kiosk user account deleted" -ForegroundColor White
     } else {
-        Write-Host "  • Kiosk user account retained (can be removed manually)" -ForegroundColor White
+        Write-Host "  - Kiosk user account retained (can be removed manually)" -ForegroundColor White
     }
     
     Write-Host "`nNext Steps:" -ForegroundColor Cyan
-    Write-Host "  • Restart the computer to ensure all changes take effect" -ForegroundColor White
-    Write-Host "  • Normal Windows access should be restored" -ForegroundColor White
+    Write-Host "  - Restart the computer to ensure all changes take effect" -ForegroundColor White
+    Write-Host "  - Normal Windows access should be restored" -ForegroundColor White
     
     if (-not $RemoveUser) {
         Write-Host "`nTo manually remove the user account later, run:" -ForegroundColor Yellow

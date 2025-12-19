@@ -135,48 +135,21 @@ function Update-XMLConfiguration {
     $xmlPath = Join-Path $ScriptRoot "KioskConfig.xml"
     
     try {
-        # Load XML using .NET parser for robustness
-        $xml = New-Object System.Xml.XmlDocument
-        $xml.PreserveWhitespace = $true
-        $xml.Load($xmlPath)
-        
-        # Define namespace manager
-        $nsMgr = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
-        $nsMgr.AddNamespace("ns", "http://schemas.microsoft.com/AssignedAccess/2017/config")
-        
-        # Find the scanner app node
-        # We look for the placeholder path
+        # Read XML as text and replace the placeholder path
+        $xmlContent = Get-Content -Path $xmlPath -Raw -Encoding UTF8
         $placeholderPath = "C:\Program Files\ScannerApp\scanner.exe"
-        $node = $xml.SelectSingleNode("//ns:App[@DesktopAppPath='$placeholderPath']", $nsMgr)
         
-        if ($node) {
-            $node.SetAttribute("DesktopAppPath", $ScannerPath)
-            $xml.Save($xmlPath)
+        # Escape backslashes for replacement
+        $escapedPlaceholder = [regex]::Escape($placeholderPath)
+        
+        if ($xmlContent -match $escapedPlaceholder) {
+            $xmlContent = $xmlContent -replace $escapedPlaceholder, [regex]::Escape($ScannerPath)
+            $xmlContent | Out-File -FilePath $xmlPath -Encoding UTF8 -NoNewline
             Write-Host "  [OK] XML configuration updated with scanner path" -ForegroundColor $ColorSuccess
             Write-Log "XML updated successfully"
         } else {
-            # Fallback: Try to find any node that looks like the scanner placeholder
-            # This handles cases where the file might have been manually edited
-            Write-Log "Standard placeholder not found, attempting fuzzy search..." "WARNING"
-            
-            $nodes = $xml.SelectNodes("//ns:App", $nsMgr)
-            $updated = $false
-            
-            foreach ($appNode in $nodes) {
-                if ($appNode.DesktopAppPath -like "*ScannerApp*") {
-                    $appNode.SetAttribute("DesktopAppPath", $ScannerPath)
-                    $updated = $true
-                    break
-                }
-            }
-            
-            if ($updated) {
-                $xml.Save($xmlPath)
-                Write-Host "  [OK] XML configuration updated (fuzzy match)" -ForegroundColor $ColorSuccess
-            } else {
-                Write-Host "  [WARN] Could not find scanner placeholder in XML. Please update KioskConfig.xml manually." -ForegroundColor $ColorWarning
-                Write-Log "Failed to update XML: Placeholder not found" "ERROR"
-            }
+            Write-Host "  [WARN] Scanner placeholder not found in XML. Update KioskConfig.xml manually." -ForegroundColor $ColorWarning
+            Write-Log "Scanner placeholder not found in XML" "WARNING"
         }
     } catch {
         Write-Host "  [ERROR] Failed to update XML: $($_.Exception.Message)" -ForegroundColor $ColorError
@@ -191,9 +164,9 @@ try {
     Show-Header "Windows 10 Pro Kiosk Mode Deployment"
     
     Write-Host "This script will set up a kiosk mode environment with:" -ForegroundColor $ColorInfo
-    Write-Host "  • Restricted user account: $KioskUserName" -ForegroundColor $ColorInfo
-    Write-Host "  • Allowed apps: Chrome, Scanner app, File Explorer" -ForegroundColor $ColorInfo
-    Write-Host "  • AppLocker policies for application restriction" -ForegroundColor $ColorInfo
+    Write-Host "  - Restricted user account: $KioskUserName" -ForegroundColor $ColorInfo
+    Write-Host "  - Allowed apps: Chrome, Scanner app, File Explorer" -ForegroundColor $ColorInfo
+    Write-Host "  - AppLocker policies for application restriction" -ForegroundColor $ColorInfo
     
     if (-not $AutomaticMode) {
         Write-Host "`nPress Enter to continue or Ctrl+C to cancel..." -ForegroundColor $ColorWarning
@@ -290,10 +263,10 @@ try {
     Write-Host "Kiosk mode has been configured successfully!`n" -ForegroundColor $ColorSuccess
     
     Write-Host "Configuration Summary:" -ForegroundColor $ColorHeader
-    Write-Host "  • Kiosk User: $KioskUserName" -ForegroundColor $ColorInfo
-    Write-Host "  • Allowed Apps: Chrome, Scanner app, File Explorer" -ForegroundColor $ColorInfo
-    Write-Host "  • File Access: Downloads folder (configurable in XML)" -ForegroundColor $ColorInfo
-    Write-Host "  • Log File: $LogFile" -ForegroundColor $ColorInfo
+    Write-Host "  - Kiosk User: $KioskUserName" -ForegroundColor $ColorInfo
+    Write-Host "  - Allowed Apps: Chrome, Scanner app, File Explorer" -ForegroundColor $ColorInfo
+    Write-Host "  - File Access: Downloads folder (configurable in XML)" -ForegroundColor $ColorInfo
+    Write-Host "  - Log File: $LogFile" -ForegroundColor $ColorInfo
     
     Write-Host "`nNext Steps:" -ForegroundColor $ColorHeader
     Write-Host "  1. Review KioskConfig.xml and update scanner app path if needed" -ForegroundColor $ColorInfo
@@ -303,9 +276,9 @@ try {
     Write-Host "  5. Verify only allowed applications are accessible" -ForegroundColor $ColorInfo
     
     Write-Host "`nImportant Notes:" -ForegroundColor $ColorWarning
-    Write-Host "  • Windows 10 Pro has limited programmatic multi-app kiosk deployment" -ForegroundColor $ColorWarning
-    Write-Host "  • You may need to configure via Settings > Accounts > Assigned Access" -ForegroundColor $ColorWarning
-    Write-Host "  • See DEPLOYMENT_INSTRUCTIONS.txt for alternative deployment methods" -ForegroundColor $ColorWarning
+    Write-Host "  - Windows 10 Pro has limited programmatic multi-app kiosk deployment" -ForegroundColor $ColorWarning
+    Write-Host "  - You may need to configure via Settings > Accounts > Assigned Access" -ForegroundColor $ColorWarning
+    Write-Host "  - See DEPLOYMENT_INSTRUCTIONS.txt for alternative deployment methods" -ForegroundColor $ColorWarning
     
     Write-Host "`nUseful Commands:" -ForegroundColor $ColorHeader
     Write-Host "  Validate config:  .\3-Validate-KioskConfig.ps1" -ForegroundColor Gray
@@ -320,10 +293,10 @@ try {
     Write-Log "Deployment failed: $($_.Exception.Message)" "ERROR"
     
     Write-Host "`nTroubleshooting:" -ForegroundColor $ColorWarning
-    Write-Host "  • Check the log file: $LogFile" -ForegroundColor $ColorInfo
-    Write-Host "  • Ensure you're running as Administrator" -ForegroundColor $ColorInfo
-    Write-Host "  • Verify Windows 10 Pro version 1709 or later" -ForegroundColor $ColorInfo
-    Write-Host "  • Run individual scripts manually to isolate the issue" -ForegroundColor $ColorInfo
+    Write-Host "  - Check the log file: $LogFile" -ForegroundColor $ColorInfo
+    Write-Host "  - Ensure you're running as Administrator" -ForegroundColor $ColorInfo
+    Write-Host "  - Verify Windows 10 Pro version 1709 or later" -ForegroundColor $ColorInfo
+    Write-Host "  - Run individual scripts manually to isolate the issue" -ForegroundColor $ColorInfo
     
     exit 1
 }

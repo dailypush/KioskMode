@@ -178,7 +178,7 @@ function Set-AssignedAccessViaProvisioning {
     # 2. Apply it using Add-ProvisioningPackage
     # For now, we'll document the limitation
     
-    Write-Host "`n⚠ IMPORTANT: Multi-app kiosk deployment limitation detected" -ForegroundColor Yellow
+    Write-Host "`n[IMPORTANT] Multi-app kiosk deployment limitation detected" -ForegroundColor Yellow
     Write-Host "Windows 10 Pro has limited support for programmatic multi-app kiosk deployment." -ForegroundColor Yellow
     Write-Host "`nOptions:" -ForegroundColor Cyan
     Write-Host "1. Use Windows Configuration Designer to create a provisioning package (.ppkg)" -ForegroundColor White
@@ -264,6 +264,6 @@ try {
     
 } catch {
     Write-Log "Deployment failed: $($_.Exception.Message)" "ERROR"
-    Write-Host "`n✗ Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "`n[ERROR] Error: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
