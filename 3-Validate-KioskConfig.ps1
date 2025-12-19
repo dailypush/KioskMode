@@ -41,10 +41,10 @@ function Write-Status {
     )
     
     $symbol = switch ($Status) {
-        "Pass"    { "✓"; $color = "Green" }
-        "Fail"    { "✗"; $color = "Red" }
-        "Warning" { "⚠"; $color = "Yellow" }
-        "Info"    { "ℹ"; $color = "Cyan" }
+        "Pass"    { "[PASS]"; $color = "Green" }
+        "Fail"    { "[FAIL]"; $color = "Red" }
+        "Warning" { "[WARN]"; $color = "Yellow" }
+        "Info"    { "[INFO]"; $color = "Cyan" }
     }
     
     Write-Host "$symbol $Message" -ForegroundColor $color
@@ -211,13 +211,13 @@ try {
     Write-Host "========================================`n" -ForegroundColor Cyan
     
     if ($allPassed) {
-        Write-Host "✓ All critical checks passed!" -ForegroundColor Green
+        Write-Host "[SUCCESS] All critical checks passed!" -ForegroundColor Green
         Write-Host "`nNext Steps:" -ForegroundColor Cyan
         Write-Host "1. Sign out and log in as '$KioskUserName' to test kiosk mode" -ForegroundColor White
         Write-Host "2. Verify only allowed apps are accessible" -ForegroundColor White
         Write-Host "3. Test Chrome and Scanner app functionality" -ForegroundColor White
     } else {
-        Write-Host "✗ Some critical checks failed!" -ForegroundColor Red
+        Write-Host "[ERROR] Some critical checks failed!" -ForegroundColor Red
         Write-Host "`nReview the errors above and:" -ForegroundColor Yellow
         Write-Host "1. Re-run .\1-Create-KioskUser.ps1 if user is missing" -ForegroundColor White
         Write-Host "2. Re-run .\2-Deploy-KioskConfig.ps1 to apply configuration" -ForegroundColor White
@@ -235,7 +235,7 @@ try {
     Write-Host "Log File: $LogFile`n" -ForegroundColor Gray
     
 } catch {
-    Write-Host "`n✗ Validation error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "`n[ERROR] Validation error: $($_.Exception.Message)" -ForegroundColor Red
     Write-Log "Validation error: $($_.Exception.Message)" "ERROR"
     exit 1
 }

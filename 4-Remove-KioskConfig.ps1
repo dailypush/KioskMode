@@ -218,7 +218,7 @@ try {
     Write-Log "=== Kiosk Configuration Removal Completed ===" "SUCCESS"
     
     Write-Host "`n========================================" -ForegroundColor Green
-    Write-Host "✓ Removal Completed Successfully!" -ForegroundColor Green
+    Write-Host "[SUCCESS] Removal Completed Successfully!" -ForegroundColor Green
     Write-Host "========================================`n" -ForegroundColor Green
     
     Write-Host "Summary:" -ForegroundColor Cyan
@@ -243,7 +243,7 @@ try {
     
 } catch {
     Write-Log "Removal failed: $($_.Exception.Message)" "ERROR"
-    Write-Host "`n✗ Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "`n[ERROR] Error: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "`nPartial removal may have occurred. Check the log file: $LogFile" -ForegroundColor Yellow
     exit 1
 }

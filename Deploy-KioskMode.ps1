@@ -91,7 +91,7 @@ function Test-Prerequisites {
     if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
         throw "This script must be run as Administrator"
     }
-    Write-Host "  ✓ Running as Administrator" -ForegroundColor $ColorSuccess
+    Write-Host "  [OK] Running as Administrator" -ForegroundColor $ColorSuccess
     
     # Check Windows version
     $build = [System.Environment]::OSVersion.Version.Build
@@ -99,7 +99,7 @@ function Test-Prerequisites {
     if ($build -lt $minBuild) {
         throw "Multi-app kiosk requires Windows 10 build $minBuild (version 1709) or later. Current: $build"
     }
-    Write-Host "  ✓ Windows 10 build $build (meets requirements)" -ForegroundColor $ColorSuccess
+    Write-Host "  [OK] Windows 10 build $build (meets requirements)" -ForegroundColor $ColorSuccess
     
     # Check required files
     $requiredFiles = @(
@@ -107,6 +107,7 @@ function Test-Prerequisites {
         "2-Deploy-KioskConfig.ps1",
         "3-Validate-KioskConfig.ps1",
         "4-Remove-KioskConfig.ps1",
+        "5-Create-LogoffShortcut.ps1",
         "KioskConfig.xml"
     )
     
@@ -116,7 +117,7 @@ function Test-Prerequisites {
             throw "Required file not found: $file"
         }
     }
-    Write-Host "  ✓ All required files present" -ForegroundColor $ColorSuccess
+    Write-Host "  [OK] All required files present" -ForegroundColor $ColorSuccess
     
     Write-Log "Pre-flight checks passed"
 }
@@ -132,16 +133,55 @@ function Update-XMLConfiguration {
     Write-Log "Updating XML configuration with scanner app path: $ScannerPath"
     
     $xmlPath = Join-Path $ScriptRoot "KioskConfig.xml"
-    [xml]$xml = Get-Content -Path $xmlPath
     
-    # Find and update scanner app path
-    $placeholderPath = "C:\Program Files\ScannerApp\scanner.exe"
-    $xml.InnerXml = $xml.InnerXml -replace [regex]::Escape($placeholderPath), $ScannerPath
-    
-    # Save updated XML
-    $xml.Save($xmlPath)
-    Write-Host "  ✓ XML configuration updated with scanner path" -ForegroundColor $ColorSuccess
-    Write-Log "XML updated successfully"
+    try {
+        # Load XML using .NET parser for robustness
+        $xml = New-Object System.Xml.XmlDocument
+        $xml.PreserveWhitespace = $true
+        $xml.Load($xmlPath)
+        
+        # Define namespace manager
+        $nsMgr = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+        $nsMgr.AddNamespace("ns", "http://schemas.microsoft.com/AssignedAccess/2017/config")
+        
+        # Find the scanner app node
+        # We look for the placeholder path
+        $placeholderPath = "C:\Program Files\ScannerApp\scanner.exe"
+        $node = $xml.SelectSingleNode("//ns:App[@DesktopAppPath='$placeholderPath']", $nsMgr)
+        
+        if ($node) {
+            $node.SetAttribute("DesktopAppPath", $ScannerPath)
+            $xml.Save($xmlPath)
+            Write-Host "  [OK] XML configuration updated with scanner path" -ForegroundColor $ColorSuccess
+            Write-Log "XML updated successfully"
+        } else {
+            # Fallback: Try to find any node that looks like the scanner placeholder
+            # This handles cases where the file might have been manually edited
+            Write-Log "Standard placeholder not found, attempting fuzzy search..." "WARNING"
+            
+            $nodes = $xml.SelectNodes("//ns:App", $nsMgr)
+            $updated = $false
+            
+            foreach ($appNode in $nodes) {
+                if ($appNode.DesktopAppPath -like "*ScannerApp*") {
+                    $appNode.SetAttribute("DesktopAppPath", $ScannerPath)
+                    $updated = $true
+                    break
+                }
+            }
+            
+            if ($updated) {
+                $xml.Save($xmlPath)
+                Write-Host "  [OK] XML configuration updated (fuzzy match)" -ForegroundColor $ColorSuccess
+            } else {
+                Write-Host "  [WARN] Could not find scanner placeholder in XML. Please update KioskConfig.xml manually." -ForegroundColor $ColorWarning
+                Write-Log "Failed to update XML: Placeholder not found" "ERROR"
+            }
+        }
+    } catch {
+        Write-Host "  [ERROR] Failed to update XML: $($_.Exception.Message)" -ForegroundColor $ColorError
+        Write-Log "XML update error: $($_.Exception.Message)" "ERROR"
+    }
 }
 
 # Main deployment orchestration
@@ -181,12 +221,12 @@ try {
             $ScannerAppPath = Read-Host "Scanner app path (or press Enter to configure later)"
             
             if ($ScannerAppPath -and (Test-Path $ScannerAppPath)) {
-                Write-Host "  ✓ Scanner app found: $ScannerAppPath" -ForegroundColor $ColorSuccess
+                Write-Host "  [OK] Scanner app found: $ScannerAppPath" -ForegroundColor $ColorSuccess
             } elseif ($ScannerAppPath) {
-                Write-Host "  ⚠ Scanner app not found at specified path" -ForegroundColor $ColorWarning
+                Write-Host "  [WARN] Scanner app not found at specified path" -ForegroundColor $ColorWarning
                 Write-Host "  You can update KioskConfig.xml manually later" -ForegroundColor $ColorWarning
             } else {
-                Write-Host "  ℹ Scanner app will need to be configured manually in KioskConfig.xml" -ForegroundColor $ColorInfo
+                Write-Host "  [INFO] Scanner app will need to be configured manually in KioskConfig.xml" -ForegroundColor $ColorInfo
             }
         }
     }
@@ -202,7 +242,7 @@ try {
         
         $existingUser = Get-LocalUser -Name $KioskUserName -ErrorAction SilentlyContinue
         if ($existingUser) {
-            Write-Host "  ℹ User '$KioskUserName' already exists. Skipping creation." -ForegroundColor $ColorInfo
+            Write-Host "  [INFO] User '$KioskUserName' already exists. Skipping creation." -ForegroundColor $ColorInfo
             Write-Log "User already exists, skipping creation"
         } else {
             Write-Host "Creating user account '$KioskUserName'..." -ForegroundColor $ColorInfo
@@ -215,7 +255,7 @@ try {
                 throw "User creation failed with exit code $LASTEXITCODE"
             }
             
-            Write-Host "  ✓ User account created successfully" -ForegroundColor $ColorSuccess
+            Write-Host "  [OK] User account created successfully" -ForegroundColor $ColorSuccess
         }
     } else {
         Write-Host "`nStep 2: Skipped (user creation)" -ForegroundColor Gray
@@ -228,7 +268,14 @@ try {
     $deployScript = Join-Path $ScriptRoot "2-Deploy-KioskConfig.ps1"
     & $deployScript -KioskUserName $KioskUserName
     
-    Write-Host "  ✓ Configuration deployment completed" -ForegroundColor $ColorSuccess
+    Write-Host "  [OK] Configuration deployment completed" -ForegroundColor $ColorSuccess
+    
+    # STEP 3.5: Create Logoff Shortcut
+    Show-Header "Step 3.5: Create Logoff Shortcut"
+    Write-Host "Creating logoff shortcut for usability..." -ForegroundColor $ColorInfo
+    
+    $shortcutScript = Join-Path $ScriptRoot "5-Create-LogoffShortcut.ps1"
+    & $shortcutScript -KioskUserName $KioskUserName
     
     # STEP 4: Validation
     Show-Header "Step 4: Validate Configuration"
@@ -238,7 +285,7 @@ try {
     & $validateScript -KioskUserName $KioskUserName
     
     # STEP 5: Summary and next steps
-    Show-Header "✓ Deployment Complete!"
+    Show-Header "[SUCCESS] Deployment Complete!"
     
     Write-Host "Kiosk mode has been configured successfully!`n" -ForegroundColor $ColorSuccess
     
@@ -268,7 +315,7 @@ try {
     Write-Log "=== Deployment Completed Successfully ==="
     
 } catch {
-    Show-Header "✗ Deployment Failed"
+    Show-Header "[ERROR] Deployment Failed"
     Write-Host "Error: $($_.Exception.Message)" -ForegroundColor $ColorError
     Write-Log "Deployment failed: $($_.Exception.Message)" "ERROR"
     

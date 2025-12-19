@@ -45,6 +45,10 @@
                     <!-- Windows File Explorer (for file access) -->
                     <App DesktopAppPath="%windir%\explorer.exe" />
                     
+                    <!-- Logoff Capability -->
+                    <App DesktopAppPath="%windir%\system32\shutdown.exe" />
+                    <App DesktopAppPath="%windir%\system32\logoff.exe" />
+                    
                     <!-- 
                         OPTIONAL: Add system apps if needed
                         Notepad for viewing text files:

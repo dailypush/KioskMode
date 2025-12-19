@@ -110,7 +110,7 @@ try {
     }
     
     Write-Log "User account setup completed successfully" "SUCCESS"
-    Write-Host "`n✓ Kiosk user account created successfully!" -ForegroundColor Green
+    Write-Host "`n[SUCCESS] Kiosk user account created successfully!" -ForegroundColor Green
     Write-Host "  Username: $KioskUserName" -ForegroundColor Cyan
     Write-Host "  Full Name: $KioskUserFullName" -ForegroundColor Cyan
     Write-Host "  Group: Users (Standard User)" -ForegroundColor Cyan
@@ -118,6 +118,6 @@ try {
     
 } catch {
     Write-Log "Error: $($_.Exception.Message)" "ERROR"
-    Write-Host "`n✗ Error creating kiosk user: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "`n[ERROR] Error creating kiosk user: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
