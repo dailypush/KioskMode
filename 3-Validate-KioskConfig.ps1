@@ -22,7 +22,8 @@ param(
 
 # Script configuration
 $ErrorActionPreference = "Stop"
-$LogFile = Join-Path $PSScriptRoot "KioskSetup.log"
+$ScriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+$LogFile = Join-Path $ScriptRoot "KioskSetup.log"
 
 # Logging function
 function Write-Log {
@@ -197,7 +198,7 @@ try {
     
     # 7. Configuration files
     Write-Host "`n[7] Configuration Files" -ForegroundColor Yellow
-    $configPath = Join-Path $PSScriptRoot "KioskConfig.xml"
+    $configPath = Join-Path $ScriptRoot "KioskConfig.xml"
     if (Test-Path $configPath) {
         Write-Status "KioskConfig.xml exists" -Status Pass
     } else {

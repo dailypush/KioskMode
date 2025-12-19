@@ -38,7 +38,8 @@ param(
 
 # Script configuration
 $ErrorActionPreference = "Stop"
-$LogFile = Join-Path $PSScriptRoot "KioskSetup.log"
+$ScriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+$LogFile = Join-Path $ScriptRoot "KioskSetup.log"
 
 # Logging function
 function Write-Log {

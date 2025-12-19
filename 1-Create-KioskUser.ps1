@@ -21,7 +21,7 @@ param(
     [string]$KioskUserFullName = "Kiosk Mode User",
     
     [Parameter(Mandatory=$false)]
-    [string]$KioskUserDescription = "Restricted kiosk account for Chrome and Scanner access",
+    [string]$KioskUserDescription = "Restricted kiosk account for Chrome and Scanner",
     
     [Parameter(Mandatory=$false)]
     [SecureString]$Password
@@ -29,7 +29,8 @@ param(
 
 # Script configuration
 $ErrorActionPreference = "Stop"
-$LogFile = Join-Path $PSScriptRoot "KioskSetup.log"
+$ScriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+$LogFile = Join-Path $ScriptRoot "KioskSetup.log"
 
 # Logging function
 function Write-Log {

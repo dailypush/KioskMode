@@ -22,7 +22,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$false)]
-    [string]$ConfigPath = (Join-Path $PSScriptRoot "KioskConfig.xml"),
+    [string]$ConfigPath,
     
     [Parameter(Mandatory=$false)]
     [string]$KioskUserName = "KioskUser"
@@ -30,7 +30,9 @@ param(
 
 # Script configuration
 $ErrorActionPreference = "Stop"
-$LogFile = Join-Path $PSScriptRoot "KioskSetup.log"
+$ScriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $ConfigPath) { $ConfigPath = Join-Path $ScriptRoot "KioskConfig.xml" }
+$LogFile = Join-Path $ScriptRoot "KioskSetup.log"
 
 # Logging function
 function Write-Log {
@@ -186,7 +188,7 @@ function Set-AssignedAccessViaProvisioning {
     Write-Host "`nYour configuration file is ready at: $XmlPath" -ForegroundColor Green
     
     # Save helpful instructions
-    $instructionsPath = Join-Path $PSScriptRoot "DEPLOYMENT_INSTRUCTIONS.txt"
+    $instructionsPath = Join-Path $ScriptRoot "DEPLOYMENT_INSTRUCTIONS.txt"
     @"
 AssignedAccess Multi-App Kiosk Deployment Instructions
 ======================================================
